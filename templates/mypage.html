@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>마이페이지 | InAirpod</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+            integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+            crossorigin="anonymous"></script>
+    <script src=" https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Noto+Sans+KR:wght@300&display=swap"
+          rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css?family=Stylish&display=swap" rel="stylesheet">
+    <!— font —>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Noto+Sans+KR:wght@300&display=swap"
+          rel="stylesheet">
+    <link href="../static/css/mypage.css" rel="stylesheet">
+
+       <!-- 일반적인 favicon 설정 -->
+    <link rel="icon" href="../static/img/favicon.ico" />
+    <!-- 아이폰용 favicon 설정 -->
+    <link rel="apple-touch-icon" href="../static/img/favicon.ico" />
+    <!-- 인터넷 익스플로러용 favicon 설정 -->
+    <link
+      rel="short icon"
+      type="image/x-icon"
+      href="../static/img/favicon.ico"
+    />
+
+    <script>
+        function close_popup() {
+            $('.window').hide()
+            $('.background').hide()
+
+        }
+
+        $(document).ready(function () {
+            close_popup()
+            $.ajax({
+                type: "GET",
+                url: "/mypage",
+                data: {},
+                success: function (response) {
+                    if (response['result'] == 'fail') {
+                        alert(response['msg'])
+                        window.location.replace('/login')
+                    } else {
+
+                    }
+                }
+            })
+        });
+
+
+        function logout() {
+            $.removeCookie("access_token", {path: '/'})
+            window.location.href = '/'
+        }
+
+
+        function article_delete(article_id) {
+
+            if (confirm("정말 삭제하시겠습니까 ?") == true) {
+
+                $.ajax({
+                    type: "GET",
+                    url: "/mypage/delete",
+                    data: {'article_id': article_id},
+                    success: function (response) {
+                        if (response['result'] == 'fail') {
+                            alert(response['msg'])
+                            return;
+                        } else {
+                            alert(response['msg']);
+                            window.location.reload();
+                        }
+                    }
+                })
+
+
+            } else {
+                return;
+            }
+
+
+            }
+
+            function show_popup(article_id) {
+
+                $('.window').show()
+                $('.background').show()
+                $.ajax({
+                    type: "GET",
+                    url: "/api/single",
+                    data: {"article_id": article_id},
+                    success: function (response) {
+                        comments = response['comments']
+                        article = response['article']
+                        console.log(comments, article)
+
+                        $('.window').empty()
+
+                        temp_html = `
+                <button type="button" class="close" onclick=close_popup() aria-label="Close" id="close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <div class="album-wrap" style="padding-bottom: 10px">
+                    <div class="album-img">
+                        <div class="media">
+                            <img class="mr-3" src= ${article['album_image']} alt="Generic placeholder image">
+                            <div class="media-body">
+                                <h5 class="mt-0" style="padding-top: 10px">${article['album_title']}</h5>
+                                <h6 class="mt-0">${article['album_singer']}</h6>
+
+                                <p><a href="#" onclick="like('${article['article_id']}')" style="cursor: pointer"
+                                        class="card-footer-item has-text-info like-btn">
+                                        <i class="fas fa-heart"></i>
+                                        <span class="like-counts"> ${article['like']}</span>
+                                    </a></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" id="user-comment-div">
+                        <div class="card-body">
+                            ${article['article_description']}
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+                <div class="card">
+                    <div class="card-body1">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control eee" placeholder="댓글 입력!"
+                                aria-label="Recipient's username" aria-describedby="button-addon2" id="comment">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" id="button-addon2"
+                                    onclick="submit_comment('${article['_id']}')">
+                                    입력
+                                </button>
+                            </div>
+                        </div>
+                        <ul class="list-group">
+
+                            <div id="box">
+                                <li class="media" xmlns="http://www.w3.org/1999/html">
+                                    <img class="mr-31"
+                                        src="https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMDAzMDFfMTY4%2FMDAxNTgzMDYxMTI3Mzcw.dMYeeDAJq6MPBVzEEZkY5fgWsuUPAFdEfoufAmzz5NUg.3G-OzT-ecdZspnCMJVYAa2mnDcyj6-12W-EAefLw1rkg.JPEG.z___s2%2F20200229_225235.jpg&type=a340"
+                                        id="img-size"
+                                        style="max-width: 10%; height: auto; border-radius: 100% 100% 100% 100% ">
+                                    <div class="media-body1" style="margin-left: 20px">
+                                        <p><strong>${comments[0]['user_id']}
+                                                </strong>
+                                                <small>&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;</small><small>
+                                              ${comments[0]['post_date']}</small>
+                                        </p>
+
+                                        <div >
+                                            <input type="text" id="input-data" style="display: none" value="" size="40">
+                                            <p id="putData" style="display: block">${comments[0]['contents']}
+                                                </p>
+                                            </input>
+                                        </div>
+                                        <a href='javascript:void(0);'
+                                            onclick="get_update_comment(${comments[0]['_id']});"><span
+                                                class="badge badge-primary" style="vertical-align: text-after-edge"
+                                                id="update">수정</span></a>
+                                        <a href='javascript:void(0);'
+                                            onclick="updateComment(${comments[0]['_id']});"><span
+                                                class="badge badge-primary" style="vertical-align: text-after-edge"
+                                                id="updateComplete">수정완료</span></a>
+                                        <a href='javascript:void(0);'
+                                            onclick="deleteComment((${comments[0]['_id']});"><span
+                                                class="badge badge-danger" style="vertical-align: text-after-edge"
+                                                id="delete">삭제</span></a>
+                                    </div>
+
+
+                                </li>
+                            </div>
+
+
+                        </ul>
+                    </div>
+                </div>
+                `
+                        $('.window').append(temp_html);
+
+                    }
+                })
+
+
+            }
+
+
+    </script>
+
+</head>
+<body>
+
+
+<header id="header">
+    <div class="header">
+
+        <div class="header_menu">
+            <a href="/" id="myPgBtn" class="myPgBtn">Main</a>
+            <a onclick="logout()" id="logoutBtn" class="loginBtn">Logout</a>
+
+        </div>
+
+    </div>
+</header>
+
+<div class="wrap">
+    <div class="profile">
+        <table>
+            <tr>
+                {% if user_img != "none" %}
+                    <td><img class="profile-picture" ,algin="left"
+                             src="{{ user_img }}">
+                    </td>
+                {% else %}
+                    <td><img class="profile-picture" ,algin="left"
+                             src="https://cdn.pixabay.com/photo/2017/01/11/10/25/headsets-1971383__480.jpg">
+                    </td>
+                {% endif %}
+                <td>
+                    <span class="badge">{{ user_id }}님의 공간</span>
+                    <!--posting box -->
+
+
+                    <!--posting box -->
+                    <div class="comment">
+                        <div class="card-body">
+                            {% if user_introduce != "none" %}
+                                {{ user_introduce }}
+                            {% else %}
+                                소개글을 등록해주세요 :)
+                            {% endif %}
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+
+    <!-- 이하 44라인정도 하나의 카드-->
+    <div class="card-box" id="cards-box">
+
+        {% for result in results %}
+            <!-- 수정중-------------------------------------------------------------------------------------------------------------------->
+            <div class="card" style="width: 18rem;">
+                <img class="card-img-top"
+                     src="{{ result['album_image'] }}"
+                     alt="Card image cap">
+                <div class="card-body">
+                    <span class="title">{{ result['album_title'] }}</span>
+
+                    <span class="singer">{{ result['album_singer'] }}</span>
+                    <div class="writer-box">
+                        {% if user_img != "none" %}
+
+                            <img class="writer-img" src="{{ user_img }}">
+                        {% else %}
+                            <img class="writer-img"
+                                 src="https://cdn.pixabay.com/photo/2017/01/11/10/25/headsets-1971383__480.jpg">
+                        {% endif %}
+                        <span class="comment-text">{{ result['user_id'] }}</span>
+                    </div>
+                    <div class="description">{{ result['article_description'] }}</div>
+                    <div class="date">{{ result['post_date'] }}</div>
+                    <span class="article_id__invisible">{{ result['_id'] }}</span>
+                    <div class="comments-wrap">
+                        <p>댓글</p>
+                        <div class="comment-box comment-box1">
+                            {% if result['comment1'] %}
+                                {% if result['commenter1_img'] != "none" %}
+                                    <img class="commenter-img" src="{{ result['commenter1_img'] }}">
+                                {% else %}
+                                    <img class="commenter-img"
+                                         src="https://cdn.pixabay.com/photo/2017/01/11/10/25/headsets-1971383__480.jpg">
+                                {% endif %}
+                            {% else %}
+                                <img class="commenter-img"
+                                     src="https://mblogthumb-phinf.pstatic.net/MjAxNzEyMThfMjQ1/MDAxNTEzNjA3MTcwNTg4.f9D3x971p8iDr_ox3nOQZmp2bHHA3YEtAvWI6-Zq6aAg.1E7HSp02TKDPZwC1wdciQdKiMEEzo0TvuY0ts5OmK4Mg.PNG.ooza-/IMG_9198.PNG?type=w800">
+                            {% endif %}
+
+                            <span class="comment-text">{{ result['comment1'] }}</span>
+                        </div>
+
+                        <div class="comment-box comment-box2">
+                            {% if result['comment2'] %}
+                                {% if result['commenter2_img'] != "none" %}
+                                    <img class="commenter-img" src="{{ result['commenter2_img'] }}">
+                                {% else %}
+                                    <img class="commenter-img"
+                                         src="https://cdn.pixabay.com/photo/2017/01/11/10/25/headsets-1971383__480.jpg">
+                                {% endif %}
+                            {% else %}
+                                <img class="commenter-img"
+                                     src="https://mblogthumb-phinf.pstatic.net/MjAxNzEyMThfMjQ1/MDAxNTEzNjA3MTcwNTg4.f9D3x971p8iDr_ox3nOQZmp2bHHA3YEtAvWI6-Zq6aAg.1E7HSp02TKDPZwC1wdciQdKiMEEzo0TvuY0ts5OmK4Mg.PNG.ooza-/IMG_9198.PNG?type=w800">
+                            {% endif %}
+
+
+                            <span class="comment-text">{{ result['comment2'] }}</span>
+                        </div>
+                    </div>
+                    <div class="buttons-box">
+                        <a href="#" onclick=show_popup("{{ result['_id'] }}") class="card-footer-item has-text-info">
+                            <i class="fas fa-search-plus"></i>
+                            <span class="like-counts">자세히보기</span>
+                        </a>
+
+                        <a href="#" onclick=article_delete("{{ result['_id'] }}") style="cursor: pointer"
+                           class="card-footer-item has-text-info like-btn">
+                            <i class="fas fa-heart"></i>
+                            <span class="like-counts">삭제하기</span>
+                        </a>
+                    </div>
+
+
+                </div>
+            </div>
+        {% endfor %}
+        <!-- 수정중-------------------------------------------------------------------------------------------------------------------->
+
+    </div>
+
+    <div id="background" class="background">
+        <div class="window">
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
